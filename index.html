@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Powiadomienia</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; }
+  #aktualnaGodzina { font-size: 250px; }
+  #aktualnePowiadomienie { font-size: 120px; margin-top: 55px; }
+  #nastepnePowiadomienie, #odliczanie { font-size: 50px; margin-top: 65px; }
+
+@keyframes migotanie {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.miga {
+  animation: migotanie 1s linear infinite;
+}
+
+@keyframes migajaceTlo {
+  0%, 25%, 100% { background-color: white; color: black; }
+  5% { background-color: black; color: white; }
+}
+
+.powiadomienie-miga-tlo {
+  animation: migajaceTlo 60s steps(1, end) infinite;
+}
+
+
+</style>
+<script>
+  // Pełna definicja powiadomień dla całego tygodnia
+  const powiadomienia = [
+    // Powiadomienia od poniedziałku (1) do soboty (6)
+    { dzien: 1, godzina: 3, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 1, godzina: 4, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 1, godzina: 11, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 1, godzina: 16, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 1, godzina: 18, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 2, godzina: 3, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 2, godzina: 4, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 2, godzina: 11, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 2, godzina: 16, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 2, godzina: 18, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 3, godzina: 3, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 3, godzina: 4, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 3, godzina: 11, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 3, godzina: 16, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 3, godzina: 18, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 4, godzina: 3, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 4, godzina: 4, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },    
+    { dzien: 4, godzina: 11, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 4, godzina: 16, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 4, godzina: 18, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 5, godzina: 3, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 5, godzina: 4, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 5, godzina: 11, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 5, godzina: 16, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 5, godzina: 18, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 6, godzina: 3, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 6, godzina: 4, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 6, godzina: 15, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 6, godzina: 16, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    // Powiadomienia dla niedzieli (0)
+    { dzien: 0, godzina: 3, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 0, godzina: 4, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' },
+    { dzien: 0, godzina: 15, minuta: 31, tekst: 'WYSTAW BRAKI NA KBW1' },
+    { dzien: 0, godzina: 16, minuta: 30, tekst: 'WYSTAW BRAKI NA KB2' }
+
+  ];
+
+  // Funkcja aktualizująca godzinę i powiadomienia na stronie
+  function aktualizujCzasIPowiadomienia() {
+    const teraz = new Date();
+    const dzienTygodnia = teraz.getDay();
+    const godzina = teraz.getHours();
+    const minuta = teraz.getMinutes();
+
+    // Formatowanie czasu
+    const czas = godzina * 100 + minuta;
+
+    // Filtrowanie powiadomień dla obecnego dnia tygodnia
+    const dzisiejszePowiadomienia = powiadomienia.filter(p => p.dzien === dzienTygodnia);
+    
+    // Szukanie aktualnego i następnego powiadomienia
+    let aktualnePowiadomienie = null;
+    let nastepnePowiadomienie = null;
+
+    // Znajdowanie najbliższego przyszłego powiadomienia
+    for (let i = 0; i < dzisiejszePowiadomienia.length; i++) {
+      const powiadomienie = dzisiejszePowiadomienia[i];
+      const powiadomienieCzas = powiadomienie.godzina * 100 + powiadomienie.minuta;
+      if (czas < powiadomienieCzas) {
+        nastepnePowiadomienie = powiadomienie;
+        break;
+      }
+    }
+
+    // Jeśli nie znaleziono następnego powiadomienia dzisiaj, szukamy jutrzejszego
+    if (!nastepnePowiadomienie) {
+      const jutrzejszePowiadomienia = powiadomienia.filter(p => p.dzien === (dzienTygodnia + 1) % 7);
+      nastepnePowiadomienie = jutrzejszePowiadomienia[0];
+    }
+
+    // Szukanie aktualnego powiadomienia
+    for (let i = 0; i < dzisiejszePowiadomienia.length; i++) {
+      const powiadomienie = dzisiejszePowiadomienia[i];
+      const startPowiadomienia = new Date(teraz.getFullYear(), teraz.getMonth(), teraz.getDate(), powiadomienie.godzina, powiadomienie.minuta);
+      const koniecPowiadomienia = new Date(startPowiadomienia.getTime() + 40 * 60000); // Dodajemy 40 minut do czasu rozpoczęcia powiadomienia
+
+      if (teraz >= startPowiadomienia && teraz < koniecPowiadomienia) { // Sprawdzamy czy obecny czas jest pomiędzy czasem startu a końcem powiadomienia
+        aktualnePowiadomienie = powiadomienie;
+        break;
+      }
+    }
+
+
+    // Aktualizacja aktualnej godziny
+    document.getElementById('aktualnaGodzina').textContent = teraz.toLocaleTimeString();
+
+   // Aktualizacja aktualnego powiadomienia z migotaniem
+const elementPowiadomienie = document.getElementById('aktualnePowiadomienie');
+if (aktualnePowiadomienie) {
+  elementPowiadomienie.textContent = aktualnePowiadomienie.tekst;
+  elementPowiadomienie.classList.add('miga'); // Dodajemy klasę, aby powiadomienie migało
+} else {
+  elementPowiadomienie.textContent = 'Brak aktualnych powiadomień';
+  elementPowiadomienie.classList.remove('miga'); // Usuwamy klasę, gdy nie ma powiadomienia
+}
+
+// Aktualizacja tła podczas aktualnego powiadomienia
+const cialo = document.body;
+if (aktualnePowiadomienie) {
+  elementPowiadomienie.textContent = aktualnePowiadomienie.tekst;
+  elementPowiadomienie.classList.add('miga');
+  cialo.classList.add('powiadomienie-miga-tlo'); // Dodajemy klasę, aby tło migało
+} else {
+  elementPowiadomienie.textContent = 'Brak aktualnych powiadomień';
+  elementPowiadomienie.classList.remove('miga');
+  cialo.classList.remove('powiadomienie-miga-tlo'); // Usuwamy klasę, gdy nie ma powiadomienia
+}
+
+
+    // Aktualizacja następnego powiadomienia i odliczania
+if (nastepnePowiadomienie) {
+  let nastepneCzas = new Date(teraz.getFullYear(), teraz.getMonth(), teraz.getDate(), nastepnePowiadomienie.godzina, nastepnePowiadomienie.minuta);
+
+  // Jeśli następne powiadomienie jest następnego dnia, dodajemy jeden dzień do daty
+  if (teraz > nastepneCzas) {
+    nastepneCzas = new Date(nastepneCzas.getTime() + 24 * 60 * 60 * 1000);
+  }
+
+  const pozostalyCzasMs = nastepneCzas - teraz;
+
+  const godziny = Math.floor(pozostalyCzasMs / (1000 * 60 * 60));
+  const minuty = Math.floor((pozostalyCzasMs / (1000 * 60)) % 60);
+  const sekundy = Math.floor((pozostalyCzasMs / 1000) % 60);
+
+  document.getElementById('nastepnePowiadomienie').textContent = `Następne : ${nastepnePowiadomienie.tekst}`;
+  document.getElementById('odliczanie').textContent = `Pozostało ${godziny} godzin, ${minuty} minut, ${sekundy} sekund`;
+} else {
+  document.getElementById('nastepnePowiadomienie').textContent = 'Brak następnych powiadomień';
+  document.getElementById('odliczanie').textContent = '';
+}
+
+
+    // Ponowne wywołanie funkcji co sekundę
+    setTimeout(aktualizujCzasIPowiadomienia, 1000);
+  }
+
+  // Uruchomienie funkcji po załadowaniu strony
+  document.addEventListener('DOMContentLoaded', aktualizujCzasIPowiadomienia);
+</script>
+
+</head>
+<body>
+  <div id="aktualnaGodzina"></div>
+  <div id="aktualnePowiadomienie"></div>
+  <div id="nastepnePowiadomienie"></div>
+  <div id="odliczanie"></div>
+</body>
+</html>
