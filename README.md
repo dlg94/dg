@@ -48,3 +48,7 @@ Dodano efekt migotania dla aktualnego powiadomienia i zmiany tła w trakcie powi
 Uruchomienie
 
 Strona automatycznie uruchamia funkcję aktualizacji po załadowaniu, aktualizując informacje co sekundę.
+
+
+podglad dostepny na https://dlg94.github.io/dg/
+
