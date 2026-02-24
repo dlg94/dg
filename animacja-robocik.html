@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spadajacy robocik</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(180deg, #d7efff 0%, #ffffff 100%);
+      font-family: Arial, sans-serif;
+    }
+
+    .scena {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .podloga {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: #4b4b4b;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    #robot {
+      position: absolute;
+      width: 88px;
+      height: 116px;
+      transform-origin: center center;
+    }
+
+    .glowa {
+      position: absolute;
+      top: 0;
+      left: 12px;
+      width: 64px;
+      height: 44px;
+      border: 3px solid #212121;
+      border-radius: 12px;
+      background: #d9dde2;
+    }
+
+    .antena {
+      position: absolute;
+      top: -16px;
+      left: 28px;
+      width: 6px;
+      height: 16px;
+      border-radius: 4px;
+      background: #212121;
+    }
+
+    .antena::after {
+      content: "";
+      position: absolute;
+      top: -7px;
+      left: -4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ff6464;
+      border: 2px solid #212121;
+    }
+
+    .oko {
+      position: absolute;
+      top: 15px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #27b7ff;
+      border: 2px solid #212121;
+      box-shadow: 0 0 8px rgba(39, 183, 255, 0.75);
+    }
+
+    .oko-lewe {
+      left: 16px;
+    }
+
+    .oko-prawe {
+      right: 16px;
+    }
+
+    .usta {
+      position: absolute;
+      bottom: 8px;
+      left: 14px;
+      right: 14px;
+      height: 6px;
+      border-radius: 5px;
+      background: #212121;
+      opacity: 0.75;
+    }
+
+    .korpus {
+      position: absolute;
+      top: 49px;
+      left: 8px;
+      width: 72px;
+      height: 50px;
+      border: 3px solid #212121;
+      border-radius: 10px;
+      background: #bcc2c9;
+    }
+
+    .panel {
+      position: absolute;
+      top: 13px;
+      left: 12px;
+      right: 12px;
+      height: 20px;
+      border-radius: 8px;
+      background: #8f98a3;
+      border: 2px solid #212121;
+    }
+
+    .reka {
+      position: absolute;
+      top: 56px;
+      width: 12px;
+      height: 34px;
+      border-radius: 8px;
+      background: #8f98a3;
+      border: 3px solid #212121;
+    }
+
+    .reka-lewa {
+      left: -2px;
+    }
+
+    .reka-prawa {
+      right: -2px;
+    }
+
+    .noga {
+      position: absolute;
+      bottom: 0;
+      width: 18px;
+      height: 22px;
+      border-radius: 5px;
+      background: #8f98a3;
+      border: 3px solid #212121;
+    }
+
+    .noga-lewa {
+      left: 20px;
+    }
+
+    .noga-prawa {
+      right: 20px;
+    }
+
+    .instrukcja {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.85);
+      font-size: 14px;
+      color: #1f1f1f;
+    }
+  </style>
+</head>
+<body>
+  <div class="scena">
+    <div class="instrukcja">Robocik spada i na dole losowo ucieka w lewo albo w prawo.</div>
+
+    <div id="robot" aria-label="animowany robocik">
+      <div class="glowa">
+        <div class="antena"></div>
+        <div class="oko oko-lewe"></div>
+        <div class="oko oko-prawe"></div>
+        <div class="usta"></div>
+      </div>
+      <div class="korpus">
+        <div class="panel"></div>
+      </div>
+      <div class="reka reka-lewa"></div>
+      <div class="reka reka-prawa"></div>
+      <div class="noga noga-lewa"></div>
+      <div class="noga noga-prawa"></div>
+    </div>
+
+    <div class="podloga"></div>
+  </div>
+
+  <script>
+    const robot = document.getElementById("robot");
+    const robotWidth = 88;
+    const robotHeight = 116;
+    const floorHeight = 12;
+
+    const state = {
+      x: 0,
+      y: -robotHeight,
+      phase: "falling",
+      direction: 1
+    };
+
+    const fallSpeed = 5;
+    const sideSpeed = 6;
+
+    function resetRobot() {
+      const maxX = Math.max(0, window.innerWidth - robotWidth);
+      state.x = Math.random() * maxX;
+      state.y = -robotHeight;
+      state.phase = "falling";
+      state.direction = 1;
+    }
+
+    function updateRobotPosition() {
+      const maxY = window.innerHeight - floorHeight - robotHeight;
+
+      if (state.phase === "falling") {
+        state.y += fallSpeed;
+
+        if (state.y >= maxY) {
+          state.y = maxY;
+          state.phase = "sideways";
+          state.direction = Math.random() < 0.5 ? -1 : 1;
+        }
+      } else {
+        state.x += state.direction * sideSpeed;
+
+        if (state.x + robotWidth < 0 || state.x > window.innerWidth) {
+          resetRobot();
+        }
+      }
+
+      const facing = state.phase === "sideways" ? state.direction : 1;
+      robot.style.transform = "translate(" + state.x + "px, " + state.y + "px) scaleX(" + facing + ")";
+
+      requestAnimationFrame(updateRobotPosition);
+    }
+
+    window.addEventListener("resize", () => {
+      const maxX = Math.max(0, window.innerWidth - robotWidth);
+      const maxY = Math.max(0, window.innerHeight - floorHeight - robotHeight);
+
+      state.x = Math.max(-robotWidth, Math.min(state.x, maxX + robotWidth));
+      state.y = Math.min(state.y, maxY);
+    });
+
+    resetRobot();
+    requestAnimationFrame(updateRobotPosition);
+  </script>
+</body>
+</html>
