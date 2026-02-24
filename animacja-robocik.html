@@ -35,7 +35,7 @@
       box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    #robot {
+    .robot {
       position: absolute;
       width: 88px;
       height: 116px;
@@ -177,86 +177,116 @@
 </head>
 <body>
   <div class="scena">
-    <div class="instrukcja">Robocik spada i na dole losowo ucieka w lewo albo w prawo.</div>
+    <div class="instrukcja">Nowy robocik pojawia sie co 1200 ms (zmienisz w kodzie: spawnIntervalMs).</div>
 
-    <div id="robot" aria-label="animowany robocik">
-      <div class="glowa">
-        <div class="antena"></div>
-        <div class="oko oko-lewe"></div>
-        <div class="oko oko-prawe"></div>
-        <div class="usta"></div>
-      </div>
-      <div class="korpus">
-        <div class="panel"></div>
-      </div>
-      <div class="reka reka-lewa"></div>
-      <div class="reka reka-prawa"></div>
-      <div class="noga noga-lewa"></div>
-      <div class="noga noga-prawa"></div>
-    </div>
+    <div id="roboty"></div>
 
     <div class="podloga"></div>
   </div>
 
   <script>
-    const robot = document.getElementById("robot");
+    const robotContainer = document.getElementById("roboty");
     const robotWidth = 88;
     const robotHeight = 116;
     const floorHeight = 12;
 
-    const state = {
-      x: 0,
-      y: -robotHeight,
-      phase: "falling",
-      direction: 1
-    };
-
+    // Ustawienia animacji.
+    const spawnIntervalMs = 1200; // Co ile ms pojawia sie nowy robocik.
+    const maxRobotsOnScreen = 10;
     const fallSpeed = 5;
     const sideSpeed = 6;
 
-    function resetRobot() {
-      const maxX = Math.max(0, window.innerWidth - robotWidth);
-      state.x = Math.random() * maxX;
-      state.y = -robotHeight;
-      state.phase = "falling";
-      state.direction = 1;
+    const robots = [];
+
+    function buildRobotElement() {
+      const element = document.createElement("div");
+      element.className = "robot";
+      element.setAttribute("aria-label", "animowany robocik");
+      element.innerHTML = [
+        '<div class="glowa">',
+        '  <div class="antena"></div>',
+        '  <div class="oko oko-lewe"></div>',
+        '  <div class="oko oko-prawe"></div>',
+        '  <div class="usta"></div>',
+        '</div>',
+        '<div class="korpus">',
+        '  <div class="panel"></div>',
+        '</div>',
+        '<div class="reka reka-lewa"></div>',
+        '<div class="reka reka-prawa"></div>',
+        '<div class="noga noga-lewa"></div>',
+        '<div class="noga noga-prawa"></div>'
+      ].join("");
+      return element;
     }
 
-    function updateRobotPosition() {
+    function spawnRobot() {
+      if (robots.length >= maxRobotsOnScreen) {
+        return;
+      }
+
+      const maxX = Math.max(0, window.innerWidth - robotWidth);
+      const state = {
+        element: buildRobotElement(),
+        x: Math.random() * maxX,
+        y: -robotHeight,
+        phase: "falling",
+        direction: 1
+      };
+
+      robotContainer.appendChild(state.element);
+      robots.push(state);
+    }
+
+    function updateSingleRobot(robotState) {
       const maxY = window.innerHeight - floorHeight - robotHeight;
 
-      if (state.phase === "falling") {
-        state.y += fallSpeed;
+      if (robotState.phase === "falling") {
+        robotState.y += fallSpeed;
 
-        if (state.y >= maxY) {
-          state.y = maxY;
-          state.phase = "sideways";
-          state.direction = Math.random() < 0.5 ? -1 : 1;
+        if (robotState.y >= maxY) {
+          robotState.y = maxY;
+          robotState.phase = "sideways";
+          robotState.direction = Math.random() < 0.5 ? -1 : 1;
         }
       } else {
-        state.x += state.direction * sideSpeed;
-
-        if (state.x + robotWidth < 0 || state.x > window.innerWidth) {
-          resetRobot();
+        robotState.x += robotState.direction * sideSpeed;
+        if (robotState.x + robotWidth < 0 || robotState.x > window.innerWidth) {
+          robotState.element.remove();
+          return false;
         }
       }
 
-      const facing = state.phase === "sideways" ? state.direction : 1;
-      robot.style.transform = "translate(" + state.x + "px, " + state.y + "px) scaleX(" + facing + ")";
+      const facing = robotState.phase === "sideways" ? robotState.direction : 1;
+      robotState.element.style.transform = "translate(" + robotState.x + "px, " + robotState.y + "px) scaleX(" + facing + ")";
+      return true;
+    }
 
-      requestAnimationFrame(updateRobotPosition);
+    function updateRobots() {
+      for (let i = robots.length - 1; i >= 0; i -= 1) {
+        const robotIsVisible = updateSingleRobot(robots[i]);
+        if (!robotIsVisible) {
+          robots.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(updateRobots);
     }
 
     window.addEventListener("resize", () => {
       const maxX = Math.max(0, window.innerWidth - robotWidth);
       const maxY = Math.max(0, window.innerHeight - floorHeight - robotHeight);
 
-      state.x = Math.max(-robotWidth, Math.min(state.x, maxX + robotWidth));
-      state.y = Math.min(state.y, maxY);
+      for (let i = 0; i < robots.length; i += 1) {
+        const robotState = robots[i];
+        robotState.x = Math.max(-robotWidth, Math.min(robotState.x, maxX + robotWidth));
+        robotState.y = Math.min(robotState.y, maxY);
+      }
     });
 
-    resetRobot();
-    requestAnimationFrame(updateRobotPosition);
+    spawnRobot();
+    setInterval(spawnRobot, spawnIntervalMs);
+    requestAnimationFrame(updateRobots);
   </script>
 </body>
 </html>
